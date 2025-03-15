@@ -1,11 +1,11 @@
-export async function generateQuiz(text) {
+export async function generateQuiz(text, questionCount = 5) {
   try {
     // Truncate text if it's too long (API limits)
     const truncatedText = text.length > 8000 ? text.substring(0, 8000) : text;
 
     // Create a prompt for the AI
     const prompt = `
-    You are an expert quiz creator. Based on the following text, create 5 multiple-choice questions.
+    You are an expert quiz creator. Based on the following text, create ${questionCount} multiple-choice questions.
     
     TEXT:
     ${truncatedText}
@@ -64,26 +64,26 @@ export async function generateQuiz(text) {
     } catch (parseError) {
       console.error("Error parsing AI response:", parseError);
       // Fallback to simple questions if parsing fails
-      questions = createFallbackQuestions(text);
+      questions = createFallbackQuestions(text, questionCount);
     }
 
     return questions;
   } catch (error) {
     console.error("Error generating quiz:", error);
     // Fallback to simple questions if API call fails
-    return createFallbackQuestions(text);
+    return createFallbackQuestions(text, questionCount);
   }
 }
 
 // Fallback function to create simple questions if the API call fails
-function createFallbackQuestions(text) {
+function createFallbackQuestions(text, questionCount = 5) {
   const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 20);
   const questions = [];
   
-  // Generate up to 5 questions or as many as we can from the text
-  const questionCount = Math.min(5, Math.floor(sentences.length / 2));
+  // Generate up to questionCount questions or as many as we can from the text
+  const maxQuestions = Math.min(questionCount, Math.floor(sentences.length / 2));
   
-  for (let i = 0; i < questionCount; i++) {
+  for (let i = 0; i < maxQuestions; i++) {
     const sentenceIndex = i * 2;
     if (sentenceIndex < sentences.length) {
       const sentence = sentences[sentenceIndex].trim();
@@ -124,7 +124,7 @@ function createFallbackQuestions(text) {
   }
   
   // If we couldn't generate enough questions, add some generic ones
-  while (questions.length < 3) {
+  while (questions.length < Math.min(3, questionCount)) {
     questions.push({
       question: `What is one of the main topics discussed in this document?`,
       options: [

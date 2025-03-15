@@ -4,6 +4,7 @@ import { useState } from 'react'
 
 export default function FileUpload({ setQuestions, setIsLoading, setError }) {
   const [dragActive, setDragActive] = useState(false)
+  const [questionCount, setQuestionCount] = useState(10) // Default to 10 questions
   
   // handle the file upload process
   const processFile = async (file) => {
@@ -18,6 +19,7 @@ export default function FileUpload({ setQuestions, setIsLoading, setError }) {
     // create form data to send the file
     const formData = new FormData()
     formData.append('file', file)
+    formData.append('questionCount', questionCount.toString())
     
     try {
       // Send to our API endpoint
@@ -40,6 +42,15 @@ export default function FileUpload({ setQuestions, setIsLoading, setError }) {
     } finally {
       setIsLoading(false)
     }
+  }
+  
+  // Handle question count change
+  const handleQuestionCountChange = (e) => {
+    const value = parseInt(e.target.value)
+    // Ensure the value is between 5 and 20
+    if (value < 5) setQuestionCount(5)
+    else if (value > 20) setQuestionCount(20)
+    else setQuestionCount(value)
   }
   
   // Handle normal file input change
@@ -82,6 +93,20 @@ export default function FileUpload({ setQuestions, setIsLoading, setError }) {
     >
       <p className="mb-4">Drag and drop a file or click to select</p>
       <p className="text-sm text-gray-500 mb-4">Supported formats: DOCX, TXT</p>
+      
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Number of questions (5-20):
+        </label>
+        <input
+          type="number"
+          min="5"
+          max="20"
+          value={questionCount}
+          onChange={handleQuestionCountChange}
+          className="w-20 px-2 py-1 border rounded-md text-center"
+        />
+      </div>
       
       <input
         type="file"

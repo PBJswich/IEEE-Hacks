@@ -6,6 +6,10 @@ export async function POST(request) {
   try {
     const formData = await request.formData()
     const file = formData.get('file')
+    const questionCount = parseInt(formData.get('questionCount') || '10')
+    
+    // Validate question count
+    const validQuestionCount = Math.min(Math.max(questionCount, 5), 20)
     
     if (!file) {
       return NextResponse.json(
@@ -14,7 +18,7 @@ export async function POST(request) {
       )
     }
 
-    console.log('Processing file:', file.name, 'Type:', file.type)
+    console.log('Processing file:', file.name, 'Type:', file.type, 'Questions:', validQuestionCount)
 
     // Extract text based on file type
     const fileType = file.name.split('.').pop().toLowerCase()
@@ -51,7 +55,7 @@ export async function POST(request) {
 
     // Generate quiz questions from the extracted text
     try {
-      const rawQuestions = await generateQuiz(extractedText)
+      const rawQuestions = await generateQuiz(extractedText, validQuestionCount)
       
       // Ensure each question has the required fields
       const questions = rawQuestions.map(question => {
@@ -82,8 +86,7 @@ export async function POST(request) {
       
       return NextResponse.json({ 
         questions,
-        fileName: file.name,
-        success: true
+        questionCount: validQuestionCount
       })
     } catch (quizError) {
       console.error('Quiz generation error:', quizError)
