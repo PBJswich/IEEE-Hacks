@@ -3,6 +3,8 @@
 // Component that displays the generated quiz questions
 // Shows a loading state while questions are being generated
 import { useState, useEffect } from 'react'
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx'
+import { saveAs } from 'file-saver'
 
 export default function QuizPreview({ questions, isLoading, onTakeAnotherQuiz }) {
   const [selectedAnswers, setSelectedAnswers] = useState({})
@@ -22,6 +24,69 @@ export default function QuizPreview({ questions, isLoading, onTakeAnotherQuiz })
     // Call the parent component's handler
     if (onTakeAnotherQuiz) onTakeAnotherQuiz()
   }
+  
+  // Function to export quiz results to a Word document
+  const exportToWord = async () => {
+    // Create a new document
+    const doc = new Document({
+      sections: [
+        {
+          properties: {},
+          children: [
+            new Paragraph({
+              text: "Quiz Results",
+              heading: HeadingLevel.HEADING_1,
+              alignment: AlignmentType.CENTER,
+            }),
+            new Paragraph({
+              text: `Score: ${calculateScore()} out of ${questions.length} (${Math.round((calculateScore() / questions.length) * 100)}%)`,
+              heading: HeadingLevel.HEADING_2,
+              alignment: AlignmentType.CENTER,
+            }),
+            new Paragraph({ text: "" }), // Empty paragraph for spacing
+            ...questions.flatMap((question, qIndex) => {
+              const isCorrect = selectedAnswers[qIndex] === question.correctAnswerIndex;
+              
+              return [
+                new Paragraph({
+                  text: `${qIndex + 1}. ${question.question}`,
+                  heading: HeadingLevel.HEADING_3,
+                }),
+                ...question.answers.map((answer, aIndex) => {
+                  let prefix = "   ";
+                  let style = {};
+                  
+                  if (aIndex === question.correctAnswerIndex) {
+                    prefix = " ✓ ";
+                    style = { bold: true, color: "009900" }; // Green for correct
+                  } else if (selectedAnswers[qIndex] === aIndex) {
+                    prefix = " ✗ ";
+                    style = { color: "CC0000" }; // Red for incorrect selection
+                  }
+                  
+                  return new Paragraph({
+                    children: [
+                      new TextRun({ text: prefix }),
+                      new TextRun({ text: answer, ...style }),
+                    ],
+                  });
+                }),
+                new Paragraph({
+                  text: "Explanation: " + question.explanation,
+                  style: { italics: true },
+                }),
+                new Paragraph({ text: "" }), // Empty paragraph for spacing
+              ];
+            }),
+          ],
+        },
+      ],
+    });
+
+    // Generate and save the document
+    const buffer = await Packer.toBlob(doc);
+    saveAs(buffer, "quiz-results.docx");
+  };
   
   // Don't show anything if we don't have questions and aren't loading
   if (questions.length === 0 && !isLoading) {
@@ -120,13 +185,26 @@ export default function QuizPreview({ questions, isLoading, onTakeAnotherQuiz })
             ({Math.round((calculateScore() / questions.length) * 100)}%)
           </p>
           
-          {/* Update the button to use our new handler */}
-          <button
-            onClick={handleTakeAnother}
-            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-          >
-            Take Another Quiz
-          </button>
+          <div className="flex flex-wrap gap-2 mt-4">
+            {/* Take Another Quiz button */}
+            <button
+              onClick={handleTakeAnother}
+              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+            >
+              Take Another Quiz
+            </button>
+            
+            {/* Export to Word button */}
+            <button
+              onClick={exportToWord}
+              className="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 flex items-center"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+              Export Results
+            </button>
+          </div>
         </div>
       )}
     </div>
