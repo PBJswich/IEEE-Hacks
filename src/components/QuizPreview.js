@@ -4,7 +4,7 @@
 // Shows a loading state while questions are being generated
 import { useState } from 'react'
 
-export default function QuizPreview({ questions, isLoading }) {
+export default function QuizPreview({ questions, isLoading, onTakeAnotherQuiz }) {
   const [selectedAnswers, setSelectedAnswers] = useState({})
   const [showResults, setShowResults] = useState(false)
   
@@ -88,6 +88,7 @@ export default function QuizPreview({ questions, isLoading }) {
         </div>
       ))}
       
+      {/* Render the Submit Answers button only when we have questions and results aren't shown yet */}
       {questions.length > 0 && !showResults && (
         <button
           onClick={() => setShowResults(true)}
@@ -103,6 +104,14 @@ export default function QuizPreview({ questions, isLoading }) {
             Your Score: {calculateScore()} out of {questions.length}
             ({Math.round((calculateScore() / questions.length) * 100)}%)
           </p>
+          
+          {/* Add the "Take another quiz" button */}
+          <button
+            onClick={onTakeAnotherQuiz}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+          >
+            Take Another Quiz
+          </button>
         </div>
       )}
     </div>

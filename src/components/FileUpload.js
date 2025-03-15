@@ -11,7 +11,7 @@ export default function FileUpload({ setQuestions, setIsLoading, setError }) {
     if (!file) return
     
     // reset any previous state
-    setQuestions([])
+    setQuestions([]) 
     setError('')
     setIsLoading(true)
     
@@ -32,8 +32,8 @@ export default function FileUpload({ setQuestions, setIsLoading, setError }) {
         throw new Error(data.error || 'Failed to process file')
       }
       
-      // Update with the generated questions
-      setQuestions(data.questions)
+      // Update questions with the data from the API
+      setQuestions(data.questions || [])
     } catch (error) {
       console.error('Error uploading file:', error)
       setError(error.message)
