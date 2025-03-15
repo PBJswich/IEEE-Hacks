@@ -86,15 +86,13 @@ export async function generateQuiz(text, questionCount = 5) {
       });
     } catch (parseError) {
       console.error("Error parsing AI response:", parseError);
-      // Fallback to simple questions if parsing fails
-      questions = createFallbackQuestions(text, questionCount);
+      return [];
     }
 
     return questions;
   } catch (error) {
     console.error("Error generating quiz:", error);
-    // Fallback to simple questions if API call fails
-    return createFallbackQuestions(text, questionCount);
+    return [];
   }
 }
 

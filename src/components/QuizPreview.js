@@ -114,8 +114,8 @@ export default function QuizPreview({ questions, isLoading, onTakeAnotherQuiz })
       )}
       
       {showResults && (
-        <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-          <p className="font-bold">
+        <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <p className="font-bold text-gray-800">
             Your Score: {calculateScore()} out of {questions.length}
             ({Math.round((calculateScore() / questions.length) * 100)}%)
           </p>
