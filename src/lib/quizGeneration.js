@@ -13,14 +13,16 @@ export async function generateQuiz(text, questionCount = 5) {
     For each question:
     1. Create a clear, concise question based on important information in the text
     2. Provide 4 possible answers, with only one being correct
-    3. Indicate which answer is correct
+    3. Indicate which answer is correct by including a "correctAnswerIndex" field (0 for first option, 1 for second, etc.)
+    4. Provide a brief explanation for why the correct answer is right
     
     Format your response as a JSON array with this structure:
     [
       {
         "question": "Question text here?",
         "options": ["Option A", "Option B", "Option C", "Option D"],
-        "answer": "Option A"
+        "correctAnswerIndex": 2,
+        "explanation": "Explanation of why Option C is correct, referencing the text."
       },
       ...more questions...
     ]
@@ -61,6 +63,27 @@ export async function generateQuiz(text, questionCount = 5) {
       const jsonMatch = responseContent.match(/\[[\s\S]*\]/);
       const jsonString = jsonMatch ? jsonMatch[0] : responseContent;
       questions = JSON.parse(jsonString);
+      
+      // Convert answer string to correctAnswerIndex if needed
+      questions = questions.map(q => {
+        // If we have options and answer but no correctAnswerIndex
+        if (q.options && q.answer && typeof q.correctAnswerIndex === 'undefined') {
+          // Find the index of the correct answer in the options array
+          const index = q.options.findIndex(option => 
+            option === q.answer || option.includes(q.answer) || q.answer.includes(option)
+          );
+          
+          // If found, use it; otherwise randomize
+          q.correctAnswerIndex = index >= 0 ? index : Math.floor(Math.random() * q.options.length);
+        }
+        
+        // Ensure we have an explanation
+        if (!q.explanation) {
+          q.explanation = `The correct answer is ${q.options[q.correctAnswerIndex]}.`;
+        }
+        
+        return q;
+      });
     } catch (parseError) {
       console.error("Error parsing AI response:", parseError);
       // Fallback to simple questions if parsing fails
@@ -75,67 +98,3 @@ export async function generateQuiz(text, questionCount = 5) {
   }
 }
 
-// Fallback function to create simple questions if the API call fails
-function createFallbackQuestions(text, questionCount = 5) {
-  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 20);
-  const questions = [];
-  
-  // Generate up to questionCount questions or as many as we can from the text
-  const maxQuestions = Math.min(questionCount, Math.floor(sentences.length / 2));
-  
-  for (let i = 0; i < maxQuestions; i++) {
-    const sentenceIndex = i * 2;
-    if (sentenceIndex < sentences.length) {
-      const sentence = sentences[sentenceIndex].trim();
-      
-      // Create a simple question from the sentence
-      const words = sentence.split(' ').filter(w => w.length > 4);
-      
-      if (words.length > 3) {
-        // Pick a word to ask about
-        const wordIndex = Math.floor(Math.random() * words.length);
-        const word = words[wordIndex];
-        
-        // Create a question
-        const question = `What does the text say about "${word}"?`;
-        
-        // Create options (one correct, three incorrect)
-        const correctAnswer = `It relates to ${sentence.substring(0, 50)}...`;
-        const incorrectAnswers = [
-          `It's not mentioned in the text`,
-          `It's the main topic of the entire document`,
-          `It's described as unimportant`
-        ];
-        
-        // Shuffle options
-        const options = [correctAnswer, ...incorrectAnswers];
-        for (let j = options.length - 1; j > 0; j--) {
-          const k = Math.floor(Math.random() * (j + 1));
-          [options[j], options[k]] = [options[k], options[j]];
-        }
-        
-        questions.push({
-          question,
-          options,
-          answer: correctAnswer
-        });
-      }
-    }
-  }
-  
-  // If we couldn't generate enough questions, add some generic ones
-  while (questions.length < Math.min(3, questionCount)) {
-    questions.push({
-      question: `What is one of the main topics discussed in this document?`,
-      options: [
-        'The content provided in the document',
-        'Quantum physics',
-        'Ancient history',
-        'Modern art'
-      ],
-      answer: 'The content provided in the document'
-    });
-  }
-  
-  return questions;
-}
