@@ -95,9 +95,9 @@ export default function QuizPreview({ questions, isLoading, onTakeAnotherQuiz })
           
           {/* Show explanation when results are displayed */}
           {showResults && (
-            <div className="mt-2 text-sm bg-gray-50 p-2 rounded">
-              <p className="font-medium">Explanation:</p>
-              <p>{question.explanation}</p>
+            <div className="mt-2 text-sm bg-blue-50 p-3 rounded border border-blue-200">
+              <p className="font-medium text-gray-800">Explanation:</p>
+              <p className="text-gray-700">{question.explanation}</p>
             </div>
           )}
         </div>
