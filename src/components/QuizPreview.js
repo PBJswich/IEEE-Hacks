@@ -2,11 +2,26 @@
 
 // Component that displays the generated quiz questions
 // Shows a loading state while questions are being generated
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export default function QuizPreview({ questions, isLoading, onTakeAnotherQuiz }) {
   const [selectedAnswers, setSelectedAnswers] = useState({})
   const [showResults, setShowResults] = useState(false)
+  
+  // Reset internal state when questions array changes or is emptied
+  useEffect(() => {
+    setSelectedAnswers({})
+    setShowResults(false)
+  }, [questions])
+  
+  // Handle taking another quiz
+  const handleTakeAnother = () => {
+    // Reset internal component state
+    setSelectedAnswers({})
+    setShowResults(false)
+    // Call the parent component's handler
+    if (onTakeAnotherQuiz) onTakeAnotherQuiz()
+  }
   
   // Don't show anything if we don't have questions and aren't loading
   if (questions.length === 0 && !isLoading) {
@@ -105,9 +120,9 @@ export default function QuizPreview({ questions, isLoading, onTakeAnotherQuiz })
             ({Math.round((calculateScore() / questions.length) * 100)}%)
           </p>
           
-          {/* Add the "Take another quiz" button */}
+          {/* Update the button to use our new handler */}
           <button
-            onClick={onTakeAnotherQuiz}
+            onClick={handleTakeAnother}
             className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
           >
             Take Another Quiz
